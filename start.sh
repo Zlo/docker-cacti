@@ -43,7 +43,7 @@ if [ ! -f /cacti/install.lock ]; then
     tar -xf /cacti_install/cacti-spine-*.tar.gz -C /tmp
     cd /tmp/cacti-spine-* && \
 	./bootstrap && \
-       ./configure --prefix=/spine && make && make install && \
+       ./configure --prefix=/spine --with-results-buffer=4096 && make && make install && \
        chown root:root /spine/bin/spine && \
        chmod +s /spine/bin/spine
 

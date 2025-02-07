@@ -68,7 +68,7 @@ fi
 echo "$(date +%F_%R) [Upgrade] Compile + Installing new version of Spine."
 cd /tmp/update/spine/* && \
        ./bootstrap && \
-       ./configure --prefix=/spine && make && make install && \
+       ./configure --prefix=/spine --with-results-buffer=4096 && make && make install && \
        chown root:root /spine/bin/spine && \
        chmod +s /spine/bin/spine
 
