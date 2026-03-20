@@ -1,6 +1,4 @@
-version: '2'
 services:
-
 
   cacti:
     image: "smcline06/cacti"
@@ -28,12 +26,12 @@ services:
 
 
   db:
-    image: "mariadb:10.3"
+    image: "mariadb:10.11"
     container_name: cacti_db
     domainname: example.com
     hostname: db
-    ports:
-      - "3306:3306"
+#    ports:
+#      - "3306:3306"
     command:
       - mysqld
       - --character-set-server=utf8mb4

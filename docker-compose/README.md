@@ -11,9 +11,7 @@ This is likely the most common example to deploy a cacti instance. This is not u
 
 *docker-compose.yml*
 ```
-version: '3.5'
 services:
-
 
   cacti:
     image: "smcline06/cacti"
@@ -41,12 +39,12 @@ services:
 
 
   db:
-    image: "mariadb:10.3"
+    image: "mariadb:10.11"
     container_name: cacti_db
     domainname: example.com
     hostname: db
-    ports:
-      - "3306:3306"
+#    ports:
+#      - "3306:3306"
     command:
       - mysqld
       - --character-set-server=utf8mb4
@@ -87,9 +85,7 @@ This instance would most likely be used if multiple servers are in close (same n
 
 *docker-compose.yml (Server 01)*
 ```
-version: '3.5'
 services:
-
 
   cacti-master:
     image: "smcline06/cacti"
@@ -119,12 +115,12 @@ services:
 
 
   db:
-    image: "mariadb:10.3"
+    image: "mariadb:10.11"
     container_name: cacti_db
     domainname: example.com
     hostname: db
-    ports:
-      - "3306:3306"
+#    ports:
+#      - "3306:3306"
     command:
       - mysqld
       - --character-set-server=utf8mb4
@@ -160,9 +156,7 @@ volumes:
 
 *docker-compose.yml (Server 02)*
 ```
-version: '3.5'
 services:
-
 
   cacti-poller:
     image: "smcline06/cacti"
@@ -206,9 +200,7 @@ Likely used for large deployments or where multiple locations/datacenters are at
 
 *docker-compose.yml (Server 01)*
 ```
-version: '3.5'
 services:
-
 
   cacti-master:
     image: "smcline06/cacti"
@@ -242,8 +234,8 @@ services:
     container_name: cacti_master_db
     domainname: example.com
     hostname: db-master
-    ports:
-      - "3306:3306"
+#    ports:
+#      - "3306:3306"
     command:
       - mysqld
       - --character-set-server=utf8mb4
@@ -280,9 +272,7 @@ volumes:
 
 *docker-compose.yml (Server 02)*
 ```
-version: '3.5'
 services:
-
 
   cacti-poller:
     image: "smcline06/cacti"
@@ -318,7 +308,7 @@ services:
 
  
   db-poller:
-    image: "mariadb:10.3"
+    image: "mariadb:10.11"
     container_name: cacti_poller+db
     domainname: example.com
     hostname: db-poller
