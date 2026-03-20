@@ -80,4 +80,5 @@ RUN \
     rm -rf /var/cache/yum/* && \
     chmod 0644 /etc/crontab && \
     echo "ServerName localhost" > /etc/httpd/conf.d/fqdn.conf && \
-    /usr/libexec/httpd-ssl-gencerts
+    /usr/libexec/httpd-ssl-gencerts && \
+    chmod 0400 /etc/shadow
