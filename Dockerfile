@@ -75,6 +75,7 @@ RUN \
     rrdtool net-snmp net-snmp-utils cronie mariadb autoconf \
     bison openssl openldap mod_ssl net-snmp-libs automake \
     gcc gzip libtool make net-snmp-devel dos2unix m4 which \
+    openssh-clients \
     openssl-devel mariadb-devel sendmail curl wget help2man perl-libwww-perl && \
     yum clean all && \
     rm -rf /var/cache/yum/* && \
