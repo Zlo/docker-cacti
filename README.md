@@ -201,126 +201,40 @@ REPLACE INTO `%DB_NAME%`.`settings` (`name`, `value`) VALUES('poller_type', '2')
 
 ## Troubleshooting
 
-### Build fails on `hostname` when running Docker inside an LXC/Incus container
-When Docker runs inside an LXC or Incus container, the build can fail at the `httpd-ssl-gencerts` step with:
-```
-hostname: error while loading shared libraries: /lib64/libc.so.6: cannot apply additional memory protection after relocation: Permission denied
-```
-The kernel log of the LXC/Incus **host** (not the container) then shows a denial like:
+### Build or cron fails when running Docker inside an LXC/Incus container
+When Docker runs inside an LXC or Incus container on a recent Ubuntu host, the following can happen:
+
+* The build fails at the `httpd-ssl-gencerts` step with:
+  ```
+  hostname: error while loading shared libraries: /lib64/libc.so.6: cannot apply additional memory protection after relocation: Permission denied
+  ```
+* The container runs, but cron never runs the poller, so graphs stay empty. Running `crond` in the foreground with debugging (`crond -n -x proc`) shows:
+  ```
+  PAM ERROR (Authentication failure)
+  FAILED to authorize user with PAM (Authentication failure)
+  ```
+
+The kernel log of the LXC/Incus **host** (not the container) then shows denials like:
 ```
 apparmor="DENIED" operation="file_mprotect" info="Failed name lookup - disconnected path" profile="hostname" name="rootfs/var/lib/containerd/.../usr/lib64/libc.so.6"
+apparmor="DENIED" operation="file_mprotect" profile="unix-chkpwd" name="/att/unix-chkpwd/rootfs/var/lib/containerd/.../usr/lib64/libc.so.6"
 ```
-This is not a problem with this image. Recent Ubuntu releases ship an AppArmor profile for `/usr/bin/hostname` that attaches by path, so on the host it also applies to `hostname` binaries run inside nested containers. Files inside a nested container cannot be resolved to a path on the host ("disconnected path"), and because the profile lacks the `attach_disconnected` flag, AppArmor denies the dynamic loader access to libc.
+This is not a problem with this image. Recent Ubuntu releases ship AppArmor profiles for individual system binaries such as `hostname`, `locale` and `unix_chkpwd` (the helper PAM uses to check accounts). These profiles attach by path, so on the host they also apply to those binaries when run inside nested containers. Files inside a nested container cannot be resolved to an allowed path on the host, so AppArmor denies the dynamic loader access to libc. Adding the `attach_disconnected` flag to the profiles does not help: `unix-chkpwd` already has it and is still denied.
 
-To fix it, apply one of the following on the LXC/Incus host:
-
-**Option 1: disable the `hostname` profile**
+To fix it, disable the affected profiles on the LXC/Incus host:
 ```
-sudo ln -s /etc/apparmor.d/hostname /etc/apparmor.d/disable/hostname
-sudo apparmor_parser -R /etc/apparmor.d/hostname
+for p in hostname locale unix-chkpwd; do
+  sudo ln -s /etc/apparmor.d/$p /etc/apparmor.d/disable/$p
+  sudo apparmor_parser -R /etc/apparmor.d/$p
+done
 ```
-The symlink keeps the profile disabled across reboots and package upgrades. The second command unloads it from the running kernel, so no reboot is needed.
-
-**Option 2: add the `attach_disconnected` flag to the profile**
-
-This keeps `hostname` confined. Profile flags cannot be set from the `local/hostname` include, so edit `/etc/apparmor.d/hostname` itself and change the profile header from
-```
-profile hostname @{bin}/@{exec} {
-```
-to
-```
-profile hostname @{bin}/@{exec} flags=(attach_disconnected) {
-```
-Then reload the profile:
-```
-sudo apparmor_parser -r /etc/apparmor.d/hostname
-```
-Because this modifies a file shipped by the `apparmor` package, a package upgrade may ask about the change or replace the file, in which case the edit has to be reapplied.
-
-# Change Log
-#### 1.2.17 - 05/11/2021
- * Update Cacti and Spine from 1.2.16 to 1.2.17
-   * [changelog][CL1.2.17]
-
-#### 1.2.16 - 12/27/2020
- * Update Cacti and Spine from 1.2.15 to 1.2.16
-   * [changelog][CL1.2.16]
- * [zuka1337](https://github.com/zuka1337) added powertools to base dockerfile image via [#82](https://github.com/scline/docker-cacti/pull/82)
-
-#### 1.2.15 - 11/05/2020
- * Update Cacti and Spine from 1.2.14 to 1.2.15
-   * [changelog][CL1.2.15]
-
-#### 1.2.14 - 08/15/2020
- * Close issue [#73](https://github.com/scline/docker-cacti/issues/73) - Add CACTI_URL_PATH; Thanks for the request [xbolshe](https://github.com/xbolshe) and help on apache configs.
- * Update Cacti and Spine from 1.2.11 to 1.2.14
-   * [changelog][CL1.2.14]
-
-#### 1.2.11a - 04/18/2020
- * Close issue [#64](https://github.com/scline/docker-cacti/issues/64) - FPM initialization failed; Thanks to [kevburkett](https://github.com/kevburkett) for bringing this one up and helping validate the fix
- * Close issue [#65](https://github.com/scline/docker-cacti/issues/65) - PHP-SNMP yum commands cause rpmdb error
-
-#### 1.2.11 - 04/17/2020
- * Update Docker container to use Centos8 over Centos7
- * Close issue [#59](https://github.com/scline/docker-cacti/issues/59) - errors with percona on compose single instance; Thank you [miguelwill](https://github.com/miguelwill)
-   * Update docker-comose examples with Mariadb:10.3 from older Percona version
- * Close issue [#61](https://github.com/scline/docker-cacti/issues/61) - spine directory and crontab empty after docker-compose down and restoring; Thank you [kevburkett](https://github.com/kevburkett)
-   * Update docker-compose with `spine` volume
- * Enable HTTPS functionality and self-sign certs when needed
- * Allow functionality to disable PHP-SNMP usagage via `PHP_SNMP` environment variable
- se 
- * Manual patch on provisioning new remote pollers - https://github.com/Cacti/cacti/issues/3459
- * Update Cacti and Spine from 1.2.8 to 1.2.11
-   * [changelog 1.2.10 -> 1.2.11][CL1.2.11]
-   * [changelog 1.2.9 -> 1.2.10][CL1.2.10]
-   * [changelog 1.2.8 -> 1.2.9][CL1.2.9]
-
-#### 1.2.8 - 12/11/2019
- * Update Cacti and Spine from 1.2.6 to 1.2.8
-   * [changelog 1.2.7 -> 1.2.8][CL1.2.8]
-   * [changelog 1.2.6 -> 1.2.7][CL1.2.7]
-
-#### 1.2.6a - 10/30/2019
- * Update start.sh to persist Apache Cacti configurations on restart. [#52] (https://github.com/scline/docker-cacti/issues/52)
- * Update docker-compose examples to use different type of volumes so `docker-compose down` will not affect data without the `-v` flag.
-
-#### 1.2.6 - 09/06/2019
- * Update Cacti and Spine from 1.2.0 to 1.2.6
-   * [changelog][cacti_changelog]
- * Removed 1.1.X changelog notes from README.md, this can be located in [CHANGELOG.md](https://github.com/scline/docker-cacti/blob/master/changelog.md)
- * Close Issue [#49](https://github.com/scline/docker-cacti/issues/49) - New version of Spine don't have configure file
- * Close Issue [#45](https://github.com/scline/docker-cacti/issues/45) - Directories backup and backups mixed up; thank you [shortbloke](https://github.com/shortbloke) for [PR #46](https://github.com/scline/docker-cacti/pull/46)
- * Merge [PR #47](https://github.com/scline/docker-cacti/pull/47) and [PR #48](https://github.com/scline/docker-cacti/pull/48) - Add modify PHP env; thank you [joey741019](https://github.com/joey741019)
-
-#### 1.2.0 - 01/06/2019
- * Update Cacti and Spine from 1.1.38 to 1.2.0
-    * [changelog][cacti_changelog]
-
- * Add sendmail to dockerfile via yum due to cacti 1.2.0 requirements
- * Created separate changlog file for future documentation cleanup
- * Update PHP variable readme to include `max_execution_time` and `memory_limit` changes for 1.2.0
- * Add and Hotfix the PHP variable `max_execution_time` for PHP_MAX_EXECUTION_TIME and `memory_limit` for PHP_MEMORY_LIMIT
+The symlinks keep the profiles disabled across reboots and package upgrades. `apparmor_parser -R` unloads them from the running kernel, so no reboot is needed. If the host's kernel log shows denials for other profiles with the same pattern, disable those too.
 
 # ToDo
 * Auto import remote pollers, currently you need to navigate to there GUI for a few clicks.
 * Documentation cleanup.
 
-[CL1.2.17]: http://www.cacti.net/release_notes.php?version=1.2.17
-[CL1.2.16]: http://www.cacti.net/release_notes.php?version=1.2.16
-[CL1.2.15]: http://www.cacti.net/release_notes.php?version=1.2.15
-[CL1.2.14]: http://www.cacti.net/release_notes.php?version=1.2.14
-[CL1.2.11]: http://www.cacti.net/release_notes.php?version=1.2.11
-[CL1.2.10]: http://www.cacti.net/release_notes.php?version=1.2.10
-[CL1.2.9]: http://www.cacti.net/release_notes.php?version=1.2.9
-[CL1.2.8]: http://www.cacti.net/release_notes.php?version=1.2.8
-[CL1.2.7]: http://www.cacti.net/release_notes.php?version=1.2.7
-[CL1.2.6]: http://www.cacti.net/release_notes.php?version=1.2.6
-[CL1.2.5]: http://www.cacti.net/release_notes.php?version=1.2.5
-[CL1.2.4]: http://www.cacti.net/release_notes.php?version=1.2.4
-[CL1.2.3]: http://www.cacti.net/release_notes.php?version=1.2.3
-[CL1.2.2]: http://www.cacti.net/release_notes.php?version=1.2.2
-[CL1.2.1]: http://www.cacti.net/release_notes.php?version=1.2.1
-[CL1.2.0]: http://www.cacti.net/release_notes.php?version=1.2.0
+[CL1.2.31]: http://www.cacti.net/release_notes.php?version=1.2.31
 [cacti_changelog]: https://www.cacti.net/changelog.php
 [cacti_download]: http://www.cacti.net/downloads
 [spine_download]: http://www.cacti.net/downloads/spine
