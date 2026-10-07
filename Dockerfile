@@ -1,4 +1,4 @@
-FROM rockylinux:9.0
+FROM rockylinux/rockylinux:9
 
 LABEL org.opencontainers.image.authors="Sean Cline <smcline06@gmail.com>"
 
@@ -76,7 +76,7 @@ RUN \
     bison openssl openldap mod_ssl net-snmp-libs automake \
     gcc gzip libtool make net-snmp-devel dos2unix m4 which \
     openssh-clients \
-    openssl-devel mariadb-devel sendmail curl wget help2man perl-libwww-perl && \
+    openssl-devel mariadb-devel sendmail wget help2man perl-libwww-perl && \
     yum clean all && \
     rm -rf /var/cache/yum/* && \
     chmod 0644 /etc/crontab && \
