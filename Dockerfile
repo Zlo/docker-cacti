@@ -31,9 +31,6 @@ CMD ["/start.sh"]
 ## --- Start ---
 COPY start.sh /start.sh
 
-## --- SUPPORTING FILES ---
-#COPY cacti /cacti_install
-
 # --- GET LATEST VERSION
 ADD http://files.cacti.net/spine/cacti-spine-latest.tar.gz /cacti_install/cacti-spine-latest.tar.gz 
 ADD https://files.cacti.net/cacti/linux/cacti-latest.tar.gz /cacti_install/cacti-latest.tar.gz
