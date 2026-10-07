@@ -166,6 +166,7 @@ chown -R apache.apache /cacti/cache/
 chown -R apache.apache /cacti/log/
 chown -R apache.apache /cacti/scripts/
 chown -R apache.apache /cacti/rra/
+chown -R apache.apache /cacti/include/vendor/ezyang/htmlpurifier/library/HTMLPurifier/DefinitionCache/Serializer/
 touch /cacti/include/vendor/csrf/csrf-secret.php
 chmod 644 /cacti/include/vendor/csrf/csrf-secret.php
 chown apache.apache /cacti/include/vendor/csrf/csrf-secret.php
