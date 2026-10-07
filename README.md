@@ -199,6 +199,44 @@ REPLACE INTO `%DB_NAME%`.`settings` (`name`, `value`) VALUES('path_spine_config'
 REPLACE INTO `%DB_NAME%`.`settings` (`name`, `value`) VALUES('poller_type', '2');
 ```
 
+## Troubleshooting
+
+### Build fails on `hostname` when running Docker inside an LXC/Incus container
+When Docker runs inside an LXC or Incus container, the build can fail at the `httpd-ssl-gencerts` step with:
+```
+hostname: error while loading shared libraries: /lib64/libc.so.6: cannot apply additional memory protection after relocation: Permission denied
+```
+The kernel log of the LXC/Incus **host** (not the container) then shows a denial like:
+```
+apparmor="DENIED" operation="file_mprotect" info="Failed name lookup - disconnected path" profile="hostname" name="rootfs/var/lib/containerd/.../usr/lib64/libc.so.6"
+```
+This is not a problem with this image. Recent Ubuntu releases ship an AppArmor profile for `/usr/bin/hostname` that attaches by path, so on the host it also applies to `hostname` binaries run inside nested containers. Files inside a nested container cannot be resolved to a path on the host ("disconnected path"), and because the profile lacks the `attach_disconnected` flag, AppArmor denies the dynamic loader access to libc.
+
+To fix it, apply one of the following on the LXC/Incus host:
+
+**Option 1: disable the `hostname` profile**
+```
+sudo ln -s /etc/apparmor.d/hostname /etc/apparmor.d/disable/hostname
+sudo apparmor_parser -R /etc/apparmor.d/hostname
+```
+The symlink keeps the profile disabled across reboots and package upgrades. The second command unloads it from the running kernel, so no reboot is needed.
+
+**Option 2: add the `attach_disconnected` flag to the profile**
+
+This keeps `hostname` confined. Profile flags cannot be set from the `local/hostname` include, so edit `/etc/apparmor.d/hostname` itself and change the profile header from
+```
+profile hostname @{bin}/@{exec} {
+```
+to
+```
+profile hostname @{bin}/@{exec} flags=(attach_disconnected) {
+```
+Then reload the profile:
+```
+sudo apparmor_parser -r /etc/apparmor.d/hostname
+```
+Because this modifies a file shipped by the `apparmor` package, a package upgrade may ask about the change or replace the file, in which case the edit has to be reapplied.
+
 # Change Log
 #### 1.2.17 - 05/11/2021
  * Update Cacti and Spine from 1.2.16 to 1.2.17
