@@ -3,7 +3,6 @@ services:
   cacti-master:
     image: "smcline06/cacti"
     container_name: cacti_master
-    domainname: example.com
     hostname: cactimaster
     depends_on:
       - db
@@ -30,7 +29,6 @@ services:
   cacti-poller:
     image: "smcline06/cacti"
     container_name: cacti_poller
-    domainname: example.com
     hostname: cactipoller
     depends_on:
       - db
@@ -63,7 +61,6 @@ services:
   db:
     image: "mariadb:10.11"
     container_name: cacti_db
-    domainname: example.com
     hostname: db
 #    ports:
 #      - "3306:3306"

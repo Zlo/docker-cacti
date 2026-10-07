@@ -3,7 +3,6 @@ services:
   cacti:
     image: "smcline06/cacti"
     container_name: cacti
-    domainname: example.com
     hostname: cacti
     ports:
       - "80:80"
@@ -28,7 +27,6 @@ services:
   db:
     image: "mariadb:10.11"
     container_name: cacti_db
-    domainname: example.com
     hostname: db
 #    ports:
 #      - "3306:3306"

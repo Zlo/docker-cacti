@@ -16,7 +16,6 @@ services:
   cacti:
     image: "smcline06/cacti"
     container_name: cacti
-    domainname: example.com
     hostname: cacti
     ports:
       - "80:80"
@@ -41,7 +40,6 @@ services:
   db:
     image: "mariadb:10.11"
     container_name: cacti_db
-    domainname: example.com
     hostname: db
 #    ports:
 #      - "3306:3306"
@@ -90,7 +88,6 @@ services:
   cacti-master:
     image: "smcline06/cacti"
     container_name: cacti_master
-    domainname: example.com
     hostname: cactimaster
     depends_on:
       - db
@@ -117,7 +114,6 @@ services:
   db:
     image: "mariadb:10.11"
     container_name: cacti_db
-    domainname: example.com
     hostname: db
 #    ports:
 #      - "3306:3306"
@@ -161,7 +157,6 @@ services:
   cacti-poller:
     image: "smcline06/cacti"
     container_name: cacti_poller
-    domainname: example.com
     hostname: cactipoller
     ports:
       - "8080:80"
@@ -205,7 +200,6 @@ services:
   cacti-master:
     image: "smcline06/cacti"
     container_name: cacti_master
-    domainname: example.com
     hostname: cactimaster
     depends_on:
       - db-master
@@ -232,7 +226,6 @@ services:
   db-master:
     image: "percona:5.7.14"
     container_name: cacti_master_db
-    domainname: example.com
     hostname: db-master
 #    ports:
 #      - "3306:3306"
@@ -277,7 +270,6 @@ services:
   cacti-poller:
     image: "smcline06/cacti"
     container_name: cacti_poller
-    domainname: example.com
     hostname: cactipoller
     depends_on:
       - db-poller
@@ -310,7 +302,6 @@ services:
   db-poller:
     image: "mariadb:10.11"
     container_name: cacti_poller+db
-    domainname: example.com
     hostname: db-poller
     command:
       - mysqld
