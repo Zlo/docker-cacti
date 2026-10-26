@@ -63,6 +63,7 @@ RUN \
     yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && \
     yum install -y dnf-plugins-core && \
     yum config-manager --set-enabled crb && \
+    yum update -y && \
     yum install -y \
     php php-xml php-session php-sockets php-ldap php-gd \
     php-json php-mysqlnd php-gmp php-mbstring php-posix \
