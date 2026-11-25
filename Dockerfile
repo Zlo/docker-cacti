@@ -31,6 +31,11 @@ CMD ["/start.sh"]
 ## --- Start ---
 COPY start.sh /start.sh
 
+# --- GET LATEST VERSION
+# Downloaded beforehand by `make download` rather than with ADD:
+# files.cacti.net resets the HTTP/2 stream for BuildKit's HTTP client.
+COPY cacti/cacti-spine-latest.tar.gz cacti/cacti-latest.tar.gz /cacti_install/
+
 ## --- SERVICE CONFIGS ---
 COPY configs /template_configs
 COPY configs/crontab /etc/crontab
@@ -77,16 +82,3 @@ RUN \
     echo "ServerName localhost" > /etc/httpd/conf.d/fqdn.conf && \
     /usr/libexec/httpd-ssl-gencerts && \
     chmod 0400 /etc/shadow
-
-# --- GET LATEST VERSION
-# Downloaded with curl rather than ADD: files.cacti.net resets the HTTP/2
-# stream for BuildKit's HTTP client. RUN layers are cached, so pass a new
-# value, e.g. --build-arg CACTI_FETCH_DATE=$(date +%F), to fetch a newer release.
-ARG CACTI_FETCH_DATE=unset
-RUN \
-    echo "Fetching latest Cacti and Spine (CACTI_FETCH_DATE=${CACTI_FETCH_DATE})" && \
-    curl -fsSL --retry 3 -o /cacti_install/cacti-spine-latest.tar.gz \
-        https://files.cacti.net/spine/cacti-spine-latest.tar.gz && \
-    curl -fsSL --retry 3 -o /cacti_install/cacti-latest.tar.gz \
-        https://files.cacti.net/cacti/linux/cacti-latest.tar.gz && \
-    gzip -t /cacti_install/cacti-spine-latest.tar.gz /cacti_install/cacti-latest.tar.gz

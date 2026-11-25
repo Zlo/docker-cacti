@@ -157,6 +157,9 @@ With the recent update to version 1+, Cacti has introduced the ability to have r
 
 Some docker-compose examples can be found in the following [readme][arch]
 
+## Building Locally
+Run `make` to download the latest Cacti and Spine tarballs into the `cacti` folder and build the image with `docker compose build`. The tarballs are only downloaded when missing; run `make update` to fetch the latest releases again, or `make download` to only download them.
+
 ## Container Customization
 There are a few customizations you can do if you are building the container locally. During the build process Plugins and Device Templates can be added to folders where at startup, scripts will import and install.
 
